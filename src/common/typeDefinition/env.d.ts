@@ -2,6 +2,8 @@ namespace NodeJS {
     interface ProcessEnv {
         PORT : number,
         PROJECT_TYPE : "development" | "production"
+        CORS_ORIGIN_URL : string
+        SEED_ADMIN_PHONE : string
         //db
         DB_HOST: string,
         DB_URL: string,

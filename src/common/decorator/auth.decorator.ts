@@ -4,7 +4,7 @@ import { AuthGuard } from "src/modules/auth/guard/auth.guard";
 
 export function Auth () {
     return applyDecorators(
-        ApiBearerAuth("Authorization"),
+        ApiBearerAuth(),
         UseGuards(AuthGuard)
     )
 }

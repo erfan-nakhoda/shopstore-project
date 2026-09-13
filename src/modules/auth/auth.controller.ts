@@ -34,8 +34,8 @@ export class AuthController {
     @Get("/logout")
     @ApiConsumes(SwaggerConsume.json, SwaggerConsume.urlencoded)
     @Auth()
-    logOut() {
-        return this.authService.logOut()
+    logOut(@Res({passthrough : true}) res : Response) {
+        return this.authService.logOut(res)
         
     }
     @Get("/refresh")

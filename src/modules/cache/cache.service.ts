@@ -15,12 +15,13 @@ export class CacheService {
         return code
     }
     async signOtp(phone: string): Promise<string> {
+        console.log("sending otp to user...")
         const code = randomInt(100000, 999999).toString()
         const salt = bcrypt.genSaltSync()
         const hashCode = await bcrypt.hash(code, salt)
-        const otp = await this.checkOtpExist(`otp:user:${phone}`)
+        const otp = await this.checkOtpExist(`otp:${phone}`)
         if (otp) throw new BadRequestException(AuthErrorMessage.otpExist)
-         await this.cacheManager.set(`otp:user:${phone}`, hashCode, 2 * 60 * 1000)
+         await this.cacheManager.set(`otp:${phone}`, hashCode, 2 * 60 * 1000)
         return code
     }
 }

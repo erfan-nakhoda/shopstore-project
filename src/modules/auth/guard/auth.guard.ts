@@ -20,7 +20,14 @@ export class AuthGuard implements CanActivate {
         if (!token) throw new UnauthorizedException(AuthErrorMessage.tokenNotFound)
         const payload = await this.jwtService.checkAccessToken({token, secret : process.env.ACCESS_TOKEN_SECRET})
         const user = await this.userRepo.findOne({
-            where: { id: payload.userId}
+            where: { id: payload.userId},
+            relations : {role : true},
+            select : {
+                role : {
+                    name : true,
+                    title : true
+                }
+            }
         })
 
         if (!user) throw new UnauthorizedException(AuthErrorMessage.userNotFound)

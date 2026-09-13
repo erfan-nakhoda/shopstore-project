@@ -3,7 +3,7 @@ import { DocumentBuilder, SecuritySchemeObject, SwaggerModule } from "@nestjs/sw
 
 function BearerAuthConfig() : SecuritySchemeObject {
     return {
-        name : 'Authorization',
+        name : 'bearerAuth',
         type : "http",
         in : "header",
         bearerFormat : 'JWT',

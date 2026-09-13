@@ -3,6 +3,8 @@ import { EntityNames } from "src/common/enum/names.enum";
 import { Column, CreateDateColumn, Entity, ManyToOne, OneToOne, UpdateDateColumn } from "typeorm";
 import { UserProfileEntity } from "./user-profile.entity";
 import { BasketEntity } from "src/modules/basket/entities/basket.entity";
+import { UsersRoles } from "../../rbac/enum/role.enum";
+import { RoleEntity } from "../../rbac/entities/role.entity";
 @Entity(EntityNames.users)
 export class UserEntity extends AbstractEntity { 
     @Column({unique : true})
@@ -11,6 +13,8 @@ export class UserEntity extends AbstractEntity {
     profileId : number
     @Column({nullable : true})
     basketId : number
+    @Column()
+    roleId : number
     @Column({type : "text", nullable : true})
     hashedRt : string | null
     @CreateDateColumn()
@@ -21,4 +25,6 @@ export class UserEntity extends AbstractEntity {
     profile : UserProfileEntity
     @ManyToOne(() => BasketEntity, basket => basket.users, {onDelete : "SET NULL", nullable : true})
     basket : BasketEntity
+    @ManyToOne(() => RoleEntity, role => role.users, {onDelete : 'SET NULL'})
+    role : RoleEntity
 }

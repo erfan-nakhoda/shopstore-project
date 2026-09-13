@@ -8,7 +8,8 @@ export enum AuthErrorMessage {
     userNotFound = "user not found",
     loginFirst = "login to your account",
     national_codeExist = "national code is not available",
-    emailExist = "email is not available"
+    emailExist = "email is not available",
+    roleNotExist = "role not exist"
 }
 export enum AuthSuccessMessage {
     otpSent = "otp has sent successfully",

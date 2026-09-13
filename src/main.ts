@@ -5,6 +5,11 @@ import { ValidationPipe } from '@nestjs/common';
 import cookieParser from "cookie-parser"
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  console.log(process.env.CORS_ORIGIN_URL.split(','))
+  app.enableCors({
+    origin : process.env.CORS_ORIGIN_URL.split(','),
+    credentials : true
+  })
   app.useGlobalPipes(new ValidationPipe())
   app.use(cookieParser(process.env.COOKIE_SECRET))
   SwaggerConfig(app)

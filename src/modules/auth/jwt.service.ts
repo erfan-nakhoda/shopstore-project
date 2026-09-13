@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from "@nestjs/common";
+import { BadRequestException, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { AccessTkDto, TPayload, VerfiyAccessTkDto } from "./dto/jwt.dto";
 import { AuthErrorMessage } from "src/common/messages/auth.message";
@@ -16,10 +16,15 @@ export class JwtAuthService {
     }
 
     async checkAccessToken(verifyAccessTkDto : VerfiyAccessTkDto) {
-        const {token, secret} = verifyAccessTkDto
-        const payload : TPayload = await this.jwtService.verifyAsync(token, {secret})
-        if(!payload) throw new UnauthorizedException(AuthErrorMessage.tokenInvalid)
-        return payload
+        try {
+            const {token, secret} = verifyAccessTkDto
+            const payload : TPayload = await this.jwtService.verifyAsync(token, {secret})
+            if(!payload) throw new UnauthorizedException(AuthErrorMessage.tokenInvalid)
+            return payload
+            
+        } catch (err) {
+            throw new UnauthorizedException(AuthErrorMessage.loginFirst)
+        }
     }
     async signRefreshToken(accessTkDto : AccessTkDto) {
         const {secret, payload} = accessTkDto
@@ -31,9 +36,14 @@ export class JwtAuthService {
     }
 
     async checkRefreshToken(verifyAccessTkDto : VerfiyAccessTkDto) {
-        const {token, secret} = verifyAccessTkDto
-        const payload : TPayload = await this.jwtService.verifyAsync(token, {secret})
-        if(!payload) throw new UnauthorizedException(AuthErrorMessage.tokenInvalid)
-        return payload
+        try {
+            const {token, secret} = verifyAccessTkDto
+            const payload : TPayload = await this.jwtService.verifyAsync(token, {secret})
+            if(!payload) throw new UnauthorizedException(AuthErrorMessage.tokenInvalid)
+            return payload
+            
+        } catch (err) {
+            throw new BadRequestException(AuthErrorMessage.loginFirst)
+        }
     }
 }

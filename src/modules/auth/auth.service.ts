@@ -1,4 +1,4 @@
-import { BadRequestException, Inject, Injectable, Res, Scope, UnauthorizedException } from "@nestjs/common";
+import { BadGatewayException, BadRequestException, Inject, Injectable, Res, Scope, UnauthorizedException } from "@nestjs/common";
 import { CheckOtpDto, SendOtpDto } from "./dto/auth.dto";
 import { InjectRepository } from "@nestjs/typeorm";
 import { Repository } from "typeorm";
@@ -11,22 +11,38 @@ import { REQUEST } from "@nestjs/core";
 import type { Request, Response } from "express";
 import { CookieNames } from "src/common/enum/names.enum";
 import { TPayload } from "./dto/jwt.dto";
+import { RoleEntity } from "../rbac/entities/role.entity";
+import { BasketService } from "../basket/basket.service";
+import { SendSms } from "src/common/utility/kavenegar.utils";
 
 @Injectable({ scope: Scope.REQUEST })
 export class AuthService {
     constructor(@InjectRepository(UserEntity) private userRepo: Repository<UserEntity>,
         private readonly cacheService: CacheService,
         private readonly jwtService: JwtAuthService,
-        @Inject(REQUEST) private req: Request
+        @Inject(REQUEST) private req: Request,
+        @InjectRepository(RoleEntity) private roleRepo : Repository<RoleEntity>,
+        private readonly basketService : BasketService
     ) { }
     async sendOtp(sendOtpDto: SendOtpDto) {
         const { phone } = sendOtpDto
         const user = await this.userRepo.findOneBy({ phone })
         let code: string
+        const role = await this.roleRepo.findOneBy({name : "CUSTOMER"})
+        if(!role) throw new BadGatewayException(AuthErrorMessage.roleNotExist)
         if (!user) {
-            await this.userRepo.insert({ phone })
+            const user =  this.userRepo.create({ phone, roleId : role?.id})
+            const {id} = await this.userRepo.save(user)
+            const basket = await this.basketService.createEmptyBasket({userId : id})
+            user.basketId = basket?.id
+            await this.userRepo.save(user)
         }
         code = await this.cacheService.signOtp(phone)
+        //kavenegar SMS
+        SendSms({message : `captaindev
+                            کد یک بار مصرف : ${code}
+                            این کد بعد از 2 دقیقه منقضی میشود
+            `, receptor : phone})
         return {
             status: 200,
             message: AuthSuccessMessage.otpSent,
@@ -38,7 +54,7 @@ export class AuthService {
         const { code, phone } = checkOtpDto
         const user = await this.userRepo.findOne({ where: { phone } })
         if (!user) throw new UnauthorizedException(AuthErrorMessage.userNotFound)
-        const codeSent = await this.cacheService.checkOtpExist(`otp:user:${phone}`)
+        const codeSent = await this.cacheService.checkOtpExist(`otp:${phone}`)
         if (!codeSent) throw new BadRequestException(AuthErrorMessage.otpExpiredOrPhoneWrong)
         if (!bcrypt.compareSync(code, codeSent)) throw new BadRequestException(AuthErrorMessage.otpInvalid)
         const accessToken = await this.jwtService.signAccessToken({ secret: process.env.ACCESS_TOKEN_SECRET, payload: { userId: user?.id } })
@@ -87,7 +103,7 @@ export class AuthService {
         let {refreshToken,userId} = await this.getUserIdFromCookie()
         const user = await this.userRepo.findOneBy({ id: userId })
         if (!user) throw new BadRequestException(AuthErrorMessage.userNotFound)
-        if (!bcrypt.compareSync(refreshToken, user.hashedRt)) throw new BadRequestException(AuthErrorMessage.loginFirst)
+        if (!user.hashedRt || !bcrypt.compareSync(refreshToken, user.hashedRt)) throw new BadRequestException(AuthErrorMessage.loginFirst)
         return {refreshToken, user}
         }
 }
