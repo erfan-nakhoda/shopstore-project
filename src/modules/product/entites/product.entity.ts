@@ -1,8 +1,9 @@
 import { AbstractEntity } from "src/common/abstract/entity.abstract";
 import { EntityNames } from "src/common/enum/names.enum";
+import { BasketItemEntity } from "src/modules/basket/entities/basket-item.entity";
 import { BasketEntity } from "src/modules/basket/entities/basket.entity";
 import { CategoryEntity } from "src/modules/categories/entities/category.entity";
-import { Column, Entity, ManyToOne } from "typeorm";
+import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from "typeorm";
 
 @Entity(EntityNames.products)
 export class ProductEntity extends AbstractEntity {
@@ -13,8 +14,6 @@ export class ProductEntity extends AbstractEntity {
     @Column()
     categoryId : number
     @Column({nullable : true})
-    basketId : number
-    @Column({nullable : true})
     image : string
     @Column({nullable : true})
     price : string
@@ -24,8 +23,9 @@ export class ProductEntity extends AbstractEntity {
     hex_code : string
     @Column({nullable : true})
     size : string
-    @ManyToOne(() => BasketEntity, (basket) => basket.products, {nullable : true})
-    basket : BasketEntity
+    @OneToMany(() => BasketItemEntity, (basketItem) => basketItem.product, {nullable : true})
+    basketItem : BasketItemEntity
     @ManyToOne(() => CategoryEntity, (category) => category.products)
+    @JoinColumn({name : "categoryId"})
     category : CategoryEntity
 }

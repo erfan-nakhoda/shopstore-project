@@ -14,6 +14,7 @@ import { TPayload } from "./dto/jwt.dto";
 import { RoleEntity } from "../rbac/entities/role.entity";
 import { BasketService } from "../basket/basket.service";
 import { SendSms } from "src/common/utility/kavenegar.utils";
+import { randomInt } from "crypto";
 
 @Injectable({ scope: Scope.REQUEST })
 export class AuthService {
@@ -21,28 +22,40 @@ export class AuthService {
         private readonly cacheService: CacheService,
         private readonly jwtService: JwtAuthService,
         @Inject(REQUEST) private req: Request,
-        @InjectRepository(RoleEntity) private roleRepo : Repository<RoleEntity>,
-        private readonly basketService : BasketService
+        @InjectRepository(RoleEntity) private roleRepo: Repository<RoleEntity>,
+        private readonly basketService: BasketService
     ) { }
+    async atomicSendOtp(phone: string) {
+        try{
+        const code = randomInt(100000, 999999).toString()
+        //if you subscribed to a sms provider use this function in the promise.all()
+        // SendSms({
+        //     message: `captaindev
+        //                     کد یک بار مصرف : ${code}
+        //                     این کد بعد از 2 دقیقه منقضی میشود
+        //     `, receptor: phone
+        // })
+        await Promise.all([this.cacheService.signOtp(phone, code)])
+        return code
+    }catch(err) {
+        await this.cacheService.deleteOtp(phone)
+        throw err;
+    }
+    }
     async sendOtp(sendOtpDto: SendOtpDto) {
         const { phone } = sendOtpDto
         const user = await this.userRepo.findOneBy({ phone })
-        let code: string
-        const role = await this.roleRepo.findOneBy({name : "CUSTOMER"})
-        if(!role) throw new BadGatewayException(AuthErrorMessage.roleNotExist)
+        const role = await this.roleRepo.findOneBy({ name: "CUSTOMER" })
+        if (!role) throw new BadGatewayException(AuthErrorMessage.roleNotExist)
         if (!user) {
-            const user =  this.userRepo.create({ phone, roleId : role?.id})
-            const {id} = await this.userRepo.save(user)
-            const basket = await this.basketService.createEmptyBasket({userId : id})
+            const user = this.userRepo.create({ phone, roleId: role?.id })
+            const { id } = await this.userRepo.save(user)
+            const basket = await this.basketService.createEmptyBasket({ userId: id })
             user.basketId = basket?.id
+            console.log(basket?.id)
             await this.userRepo.save(user)
         }
-        code = await this.cacheService.signOtp(phone)
-        //kavenegar SMS
-        SendSms({message : `captaindev
-                            کد یک بار مصرف : ${code}
-                            این کد بعد از 2 دقیقه منقضی میشود
-            `, receptor : phone})
+        const code = await this.atomicSendOtp(phone)
         return {
             status: 200,
             message: AuthSuccessMessage.otpSent,
@@ -69,24 +82,24 @@ export class AuthService {
         }
     }
 
-    async logOut(@Res({passthrough : true}) res : Response) {
-        const {user} = await this.validateRefreshTkAndGetUser()
+    async logOut(@Res({ passthrough: true }) res: Response) {
+        const { user } = await this.validateRefreshTkAndGetUser()
         user.hashedRt = null
         await this.userRepo.save(user)
-        res.clearCookie(CookieNames.refreshTk, {httpOnly : true, secure : process.env.PROJECT_TYPE === "production"})
+        res.clearCookie(CookieNames.refreshTk, { httpOnly: true, secure: process.env.PROJECT_TYPE === "production" })
         return {
-            status : 200,
-            message : AuthSuccessMessage.logout
+            status: 200,
+            message: AuthSuccessMessage.logout
         }
     }
 
     async refresh() {
-        let {refreshToken, user} = await this.validateRefreshTkAndGetUser()
-        refreshToken = await this.jwtService.signRefreshToken({secret : process.env.REFRESH_TOKEN_SECRET, payload : {userId : user?.id}})
-        const accessToken = await this.jwtService.signAccessToken({secret : process.env.ACCESS_TOKEN_SECRET, payload : {userId : user?.id}})
+        let { refreshToken, user } = await this.validateRefreshTkAndGetUser()
+        refreshToken = await this.jwtService.signRefreshToken({ secret: process.env.REFRESH_TOKEN_SECRET, payload: { userId: user?.id } })
+        const accessToken = await this.jwtService.signAccessToken({ secret: process.env.ACCESS_TOKEN_SECRET, payload: { userId: user?.id } })
         user.hashedRt = await bcrypt.hash(refreshToken, 10)
         return {
-            status : 200,
+            status: 200,
             accessToken,
             refreshToken
         }
@@ -96,14 +109,14 @@ export class AuthService {
         let refreshToken = this.req.cookies[CookieNames.refreshTk]
         if (!refreshToken) throw new BadRequestException(AuthErrorMessage.loginFirst)
         const { userId } = await this.jwtService.checkRefreshToken({ secret: process.env.REFRESH_TOKEN_SECRET, token: refreshToken })
-        return {refreshToken,userId}
+        return { refreshToken, userId }
     }
 
     async validateRefreshTkAndGetUser() {
-        let {refreshToken,userId} = await this.getUserIdFromCookie()
+        let { refreshToken, userId } = await this.getUserIdFromCookie()
         const user = await this.userRepo.findOneBy({ id: userId })
         if (!user) throw new BadRequestException(AuthErrorMessage.userNotFound)
         if (!user.hashedRt || !bcrypt.compareSync(refreshToken, user.hashedRt)) throw new BadRequestException(AuthErrorMessage.loginFirst)
-        return {refreshToken, user}
-        }
+        return { refreshToken, user }
+    }
 }

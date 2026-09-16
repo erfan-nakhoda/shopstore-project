@@ -1,18 +1,21 @@
+import { BadRequestException } from "@nestjs/common"
 import Kavenegar from "kavenegar"
+import { AuthErrorMessage } from "../messages/auth.message"
 interface SendSmsDto {
     message : string,
     receptor : string,
     sender ?: string
 }
-export function SendSms(sendSmsDto : SendSmsDto) {
-    const {message, sender} = sendSmsDto
+export async function SendSms(sendSmsDto : SendSmsDto) {
+    const {message, receptor} = sendSmsDto
     const api = Kavenegar.KavenegarApi({
-        apiKey : '73332F4C2F57796231383843506768626F69547741325A2B4361434543514D68506B546238682B646F58633D'
+        apiKey : process.env.SMS_API_KEY
     })
-
-    api.Send({message , sender}, (res,status) => {
-        console.log(status)
+    return new Promise((resolve, reject) => {
+        api.Send({message , receptor, sender : process.env.SMS_SENDER_NUMBER}, (res,status) => {
         console.log(res)
+        if(status != 200) return reject(new BadRequestException(AuthErrorMessage.otpSendProcess))
+        return resolve(true)
     })
-    return true
+    }) 
 }

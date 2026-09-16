@@ -14,29 +14,37 @@ export class ProductService {
     constructor(@InjectRepository(ProductEntity) private productRepo: Repository<ProductEntity>,
         @InjectRepository(CategoryEntity) private categoryRepo: Repository<CategoryEntity>
     ) { }
-    async getAll(page : number, limit : number) {
-        const {page : newPage, limit : newLimit, skip} = PaginationSolver(page, limit)
-        const [products, count] = await this.productRepo.findAndCount({ where: {}, relations : {category : true}, select : {
-            category : {
-                id : true,
-                name : true
-            }
-        },
-        take : newLimit,
-        skip
-    
-    })
-        if (!products || count == 0) return { status: 200, message: productErrorMessage.productNotFound }
+    async getAll(page: number, limit: number) {
+        const { page: newPage, limit: newLimit, skip } = PaginationSolver(page, limit)
+        const [products, count] = await this.productRepo.findAndCount({
+            where: {}, relations: { category: true }, select: {
+                category: {
+                    id: true,
+                    name: true
+                }
+            },
+            take: newLimit,
+            skip,
+            order: { id: 'DESC' }
+
+        })
+        if (!products || count == 0) return { status: 200, message: productErrorMessage.productNotFound, data : [] }
         return {
-            status : 200,
-            message : productErrorMessage.productFound,
-            pagination : PaginationGenerator(count, newPage, newLimit),
-            data : {products}
+            status: 200,
+            message: productErrorMessage.productFound,
+            pagination: PaginationGenerator(count, newPage, newLimit),
+            data: { products }
         }
     }
 
     async findOneById(id: number) {
         const product = await this.productRepo.findOne({ where: { id } })
+        if (!product) throw new BadRequestException(productErrorMessage.productNotFound)
+        return product
+    }
+
+    async findOneByIdAndName(id: number, name: string) {
+        const product = await this.productRepo.findOne({ where: { id, name } })
         if (!product) throw new BadRequestException(productErrorMessage.productNotFound)
         return product
     }
@@ -62,9 +70,9 @@ export class ProductService {
         }
     }
     async create(createProductDto: CreateProductDto) {
-        const { categoryId, color, image, name, total_count, hex_code, size } = createProductDto
+        const { categoryId, color, image, name, total_count, hex_code, size, price } = createProductDto
         if (await this.productRepo.findOneBy({ name })) throw new BadRequestException(productErrorMessage.productFound)
-        const createObj: ChangeAndMakeOptionalFields<CreateProductDto, { categoryId: number, total_count: number, image: string }> = { color, image: image?.path, name, total_count: +total_count, hex_code, size }
+        const createObj: ChangeAndMakeOptionalFields<CreateProductDto, { categoryId: number, total_count: number, image: string }> = { color, image: image?.path, name, total_count: +total_count, hex_code, size, price}
         if (categoryId) {
             const category = await this.categoryRepo.findOne({ where: { id: +categoryId } })
             if (!category) throw new BadRequestException(categoryErrorMessage.categoryNotFound)

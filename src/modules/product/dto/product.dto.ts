@@ -17,6 +17,8 @@ export class CreateProductDto {
     @ApiProperty()
     hex_code : string
     @ApiProperty()
+    price : string
+    @ApiProperty()
     size : string
     @ApiProperty({format : "binary"})
     image ?: Express.Multer.File

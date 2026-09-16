@@ -1,4 +1,4 @@
-import { Body, Controller, Get, Post, Res } from "@nestjs/common";
+import { Body, Controller, Get, Post, Res, UseInterceptors } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { CheckOtpDto, SendOtpDto } from "./dto/auth.dto";
 import { ApiConsumes, ApiTags } from "@nestjs/swagger";
@@ -7,6 +7,7 @@ import { CookieNames } from "src/common/enum/names.enum";
 import { AuthSuccessMessage } from "src/common/messages/auth.message";
 import { SwaggerConsume } from "src/common/enum/swagger.enum";
 import { Auth } from "src/common/decorator/auth.decorator";
+import { ReqInterceptor } from "src/common/interceptors/request.interceptor";
 
 @Controller('/auth')
 @ApiTags("Authentication")
@@ -39,6 +40,7 @@ export class AuthController {
         
     }
     @Get("/refresh")
+    @UseInterceptors(ReqInterceptor)
     @ApiConsumes(SwaggerConsume.json, SwaggerConsume.urlencoded)
     async refresh(@Res() res : Response) {
             const {refreshToken, ...other} = await this.authService.refresh()

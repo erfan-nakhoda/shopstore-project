@@ -4,7 +4,10 @@ export enum EntityNames {
     basket = "baskets",
     category = "categories",
     roles = "roles",
-    products = "products"
+    products = "products",
+    basketItem = "basket-items",
+    orders = "orders",
+    orderItems = "order-items"
 }
 export enum CookieNames {
     refreshTk = "refresh-token"

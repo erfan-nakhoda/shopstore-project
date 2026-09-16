@@ -4,6 +4,9 @@ namespace NodeJS {
         PROJECT_TYPE : "development" | "production"
         CORS_ORIGIN_URL : string
         SEED_ADMIN_PHONE : string
+        //SMS
+        SMS_SENDER_NUMBER : string
+        SMS_API_KEY : string
         //db
         DB_HOST: string,
         DB_URL: string,

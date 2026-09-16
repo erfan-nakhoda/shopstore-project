@@ -8,9 +8,10 @@ import { UserModule } from "../users/user.module";
 import { AuthModule } from "../auth/auth.module";
 import { AuthGuard } from "../auth/guard/auth.guard";
 import { JwtAuthService } from "../auth/jwt.service";
+import { BasketItemEntity } from "./entities/basket-item.entity";
 
 @Module({
-    imports : [TypeOrmModule.forFeature([BasketEntity]), ProductModule, UserModule],
+    imports : [TypeOrmModule.forFeature([BasketEntity, BasketItemEntity]), ProductModule, UserModule],
     controllers : [BasketController],
     providers : [BasketService, AuthGuard, JwtAuthService],
     exports : [TypeOrmModule, BasketService]
