@@ -7,25 +7,25 @@ import { Column, Entity, JoinColumn, ManyToOne, OneToMany } from "typeorm";
 
 @Entity(EntityNames.products)
 export class ProductEntity extends AbstractEntity {
-    @Column({unique : true})
-    name : string
+    @Column({ unique: true })
+    name: string
     @Column()
-    total_count : number
+    total_count: number
     @Column()
-    categoryId : number
-    @Column({nullable : true})
-    image : string
-    @Column({nullable : true})
-    price : string
+    categoryId: number
+    @Column({ nullable: true })
+    image: string
+    @Column({ nullable: true })
+    price: string
     @Column()
-    color : string
-    @Column({nullable : true})
-    hex_code : string
-    @Column({nullable : true})
-    size : string
-    @OneToMany(() => BasketItemEntity, (basketItem) => basketItem.product, {nullable : true})
-    basketItem : BasketItemEntity
-    @ManyToOne(() => CategoryEntity, (category) => category.products)
-    @JoinColumn({name : "categoryId"})
-    category : CategoryEntity
+    color: string
+    @Column({ nullable: true })
+    hex_code: string
+    @Column({ nullable: true })
+    size: string
+    @OneToMany(() => BasketItemEntity, (basketItem) => basketItem.product, { nullable: true })
+    basketItem: BasketItemEntity
+    @ManyToOne(() => CategoryEntity, (category) => category.products, { onDelete: "CASCADE" })
+    @JoinColumn({ name: "categoryId" })
+    category: CategoryEntity
 }

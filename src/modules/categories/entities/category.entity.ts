@@ -5,12 +5,12 @@ import { Column, CreateDateColumn, Entity, OneToMany } from "typeorm";
 
 @Entity(EntityNames.category)
 export class CategoryEntity extends AbstractEntity {
-    @Column({unique : true})
-    slug : string
+    @Column({ unique: true })
+    slug: string
     @Column()
-    name : string
+    name: string
     @CreateDateColumn()
-    created_at : Date
+    created_at: Date
     @OneToMany(() => ProductEntity, (product) => product.category)
-    products : ProductEntity[]
+    products: ProductEntity[]
 }
